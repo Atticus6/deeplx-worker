@@ -1,0 +1,12 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/npm/wrangler@latest/config-schema.json",
+  "name": "deeplx-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-01",
+  "assets": {
+    "directory": "public",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/hi/*"],
+    "binding": "ASSETS",
+  },
+}

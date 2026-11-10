@@ -122,6 +122,27 @@ curl -X POST https://your-worker-domain/hi/translate \
   }'
 ```
 
+## 公开实例
+
+不想自己部署，也可以直接调用本站提供的兼容接口：
+
+```bash
+curl -X POST https://www.wonglt.com/api/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceLang": "auto",
+    "targetLang": "ZH",
+    "text": "Hello world"
+  }'
+```
+
+请求字段与自部署的 `/hi/translate` 一致，响应形状也一致。匿名可用、已开启 CORS，限额为每个 IP 60 次/分钟、单次最多约 1500 字符。
+
+## 文章
+
+- [deeplx-worker：在 Cloudflare Workers 上部署免费翻译接口](https://www.wonglt.com/zh/articles/deeplx-worker-cloudflare-translate-api)
+- [English version](https://www.wonglt.com/en/articles/deeplx-worker-cloudflare-translate-api)
+
 ## 注意事项
 
 - 当前实际暴露的接口只有 `POST /hi/translate`

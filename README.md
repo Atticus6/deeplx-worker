@@ -120,6 +120,27 @@ curl -X POST https://your-worker-domain/hi/translate \
   }'
 ```
 
+## Public Instance
+
+If you do not want to deploy your own Worker, the author's site exposes a compatible endpoint:
+
+```bash
+curl -X POST https://www.wonglt.com/api/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceLang": "auto",
+    "targetLang": "ZH",
+    "text": "Hello world"
+  }'
+```
+
+It accepts the same `sourceLang` / `targetLang` / `text` body and returns the same response shape. It is anonymous, CORS enabled, limited to 60 requests/minute/IP and about 1500 characters per request.
+
+## Article
+
+- [deeplx-worker: Deploying a free translation API on Cloudflare Workers](https://www.wonglt.com/en/articles/deeplx-worker-cloudflare-translate-api)
+- [中文版](https://www.wonglt.com/zh/articles/deeplx-worker-cloudflare-translate-api)
+
 ## Notes
 
 - The public API is `POST /hi/translate`

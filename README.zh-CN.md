@@ -4,18 +4,29 @@
 
 [English README](./README.md)
 
-基于 Cloudflare Workers 和 Hono 的轻量 DeepLX 翻译服务，提供一个简单的 HTTP API，将文本转发到 DeepL Web JSON-RPC 接口并返回翻译结果。
+基于 Cloudflare Workers 和 Hono 的轻量 DeepLX 翻译服务，提供一个简单的 HTTP API，将文本转发到 DeepL 的匿名 oneshot 接口并返回翻译结果。
 
 ## 功能
 
 - 提供统一翻译接口：`POST /hi/translate`
 - 支持自动识别源语言：`sourceLang = auto`
-- 返回主翻译结果、候选替代翻译、源语言、目标语言和调用方式
+- 返回主翻译结果、源语言、目标语言和调用方式；`alternatives` 为兼容 DeepLX 保留，固定为空数组
 
 ## 路由
 
 - 静态首页：`/`
 - 翻译接口：`/hi/translate`
+
+## 公开接口
+
+部署后只有一个公开接口：
+
+```http
+POST https://<你的 Worker 域名>/hi/translate
+Content-Type: application/json
+```
+
+未配置 `TOKEN` 时匿名可用；配置后需要携带 `Authorization: Bearer <TOKEN>`。
 
 ## 快速开始
 
@@ -70,8 +81,8 @@ Authorization: Bearer <TOKEN>
 字段说明：
 
 - `sourceLang`：源语言，例如 `EN`、`ZH`、`JA`、`KO`，也可使用 `auto`
-- `targetLang`：目标语言，例如 `EN`、`ZH`
-- `text`：待翻译文本
+- `targetLang`：目标语言，例如 `EN`、`ZH`（不能是 `auto`）
+- `text`：待翻译文本（匿名接口约 1500 字符上限）
 
 ## 返回示例
 
@@ -82,7 +93,7 @@ Authorization: Bearer <TOKEN>
   "code": 200,
   "id": 123456000,
   "data": "你好，世界",
-  "alternatives": ["你好世界", "世界你好"],
+  "alternatives": [],
   "source_lang": "EN",
   "target_lang": "ZH",
   "method": "Free"
@@ -115,9 +126,10 @@ curl -X POST https://your-worker-domain/hi/translate \
 
 - 当前实际暴露的接口只有 `POST /hi/translate`
 - 配置 `TOKEN` 后，`bearerAuth1` 会校验 `Authorization: Bearer <TOKEN>` 请求头
-- `sourceLang=auto` 使用项目内置的简单判断逻辑
+- `sourceLang=auto` 会省略 `source_lang`，由 DeepL 自己识别语言
+- `alternatives` 固定为 `[]`：oneshot 接口不返回候选译文
 - Cloudflare Workers 环境下如果请求过于频繁，可能触发 DeepL 的限流或封禁
-- 本项目依赖 DeepL Web 接口的可用性，接口变动可能导致服务失效
+- 上游已切换为 DeepL 的匿名 oneshot 接口（`https://oneshot-free.www.deepl.com/v1/translate`）。旧的 `www2.deepl.com/jsonrpc` + `LMT_handle_texts` 现在会返回「请更新 DeepL」的提示而不是译文，所以 `src/deeplx.ts` 不再使用它；上游再变只需改这个文件
 
 ## License
 

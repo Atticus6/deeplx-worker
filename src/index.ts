@@ -1,21 +1,33 @@
-import { Context, Hono } from "hono";
-import { zValidator } from "./zod-validator";
+import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import z from "zod";
 import { deepLXTranslator } from "./deeplx";
-import { bearerAuth } from "hono/bearer-auth";
+import { zValidator } from "./zod-validator";
 
 type Env = { Bindings: Cloudflare.Env };
 
 const app = new Hono<Env>().basePath("/hi");
-// bearerAuth1 validates the Authorization header in the form:
-// Authorization: Bearer <TOKEN>. If TOKEN is not configured, auth is skipped.
-const bearerAuth1 = bearerAuth({
-  verifyToken: async (token, c: Context<Env>) => {
-    if (!c.env.TOKEN) {
-      return true;
-    }
-    return token === c.env.TOKEN;
-  },
+
+/**
+ * Optional bearer auth.
+ *
+ * - `TOKEN` configured: require `Authorization: Bearer <TOKEN>`.
+ * - `TOKEN` absent: let anonymous requests through. The previous `bearerAuth`
+ *   middleware still demanded a header even when the token was not configured,
+ *   which made the "anonymous when no TOKEN" behavior in the README untrue.
+ */
+const bearerAuth1 = createMiddleware<Env>(async (c, next) => {
+  const token = c.env.TOKEN;
+  if (!token) {
+    await next();
+    return;
+  }
+
+  if (c.req.header("Authorization") !== `Bearer ${token}`) {
+    return c.text("Unauthorized", 401);
+  }
+
+  await next();
 });
 
 app.post(

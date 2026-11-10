@@ -4,18 +4,31 @@
 
 [中文文档](./README.zh-CN.md)
 
-A lightweight translation service deployed on Cloudflare Workers. After deployment, you can call a single HTTP API to translate text with DeepLX.
+A lightweight translation service deployed on Cloudflare Workers. After deployment, you can call a single HTTP API to translate text with DeepL's anonymous oneshot endpoint.
 
 ## What It Does
 
 - Single translation endpoint: `POST /hi/translate`
 - Supports automatic source language detection with `sourceLang = auto`
-- Returns translated text together with alternative results and language info
+- Returns the translated text, source/target language and method. `alternatives` is kept for DeepLX compatibility and is always an empty array.
 
 ## API Endpoint
 
 - Home page: `/`
 - Translation API: `/hi/translate`
+
+## Public API
+
+After deployment, the only public endpoint is:
+
+```http
+POST https://<your-worker-domain>/hi/translate
+Content-Type: application/json
+```
+
+It accepts the JSON body documented below and returns the DeepLX-compatible
+response. If the `TOKEN` binding is not configured, the endpoint is anonymous;
+if it is configured, send `Authorization: Bearer <TOKEN>`.
 
 ## Quick Start
 
@@ -66,8 +79,8 @@ Body:
 Fields:
 
 - `sourceLang`: source language such as `EN`, `ZH`, `JA`, `KO`, or `auto`
-- `targetLang`: target language such as `EN`, `ZH`
-- `text`: the text you want to translate
+- `targetLang`: target language such as `EN`, `ZH` (it cannot be `auto`)
+- `text`: the text you want to translate (about 1500 characters max on the anonymous endpoint)
 
 ## Response
 
@@ -78,7 +91,7 @@ Success:
   "code": 200,
   "id": 123456000,
   "data": "你好，世界",
-  "alternatives": ["你好世界", "世界你好"],
+  "alternatives": [],
   "source_lang": "EN",
   "target_lang": "ZH",
   "method": "Free"
@@ -111,9 +124,10 @@ curl -X POST https://your-worker-domain/hi/translate \
 
 - The public API is `POST /hi/translate`
 - `bearerAuth1` checks the `Authorization: Bearer <TOKEN>` header when `TOKEN` is configured
-- `sourceLang=auto` uses a simple built-in heuristic
+- `sourceLang=auto` omits `source_lang` and lets DeepL detect the language
+- `alternatives` is always `[]`: the oneshot endpoint does not return alternative translations
 - Frequent requests may trigger rate limiting or temporary blocking from DeepL
-- This project depends on the availability of the DeepL web endpoint, so upstream changes may break it
+- The upstream is DeepL's anonymous oneshot endpoint (`https://oneshot-free.www.deepl.com/v1/translate`). The old `www2.deepl.com/jsonrpc` + `LMT_handle_texts` path now returns an "update DeepL" notice instead of a translation, so `src/deeplx.ts` no longer uses it. Upstream changes only need edits in that file
 
 ## License
 
